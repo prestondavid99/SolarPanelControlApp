@@ -1,6 +1,8 @@
 rootProject.name = "SolarPanelControlApp"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+//include(":app", ":kotlin-run")
+
 pluginManagement {
     repositories {
         google {

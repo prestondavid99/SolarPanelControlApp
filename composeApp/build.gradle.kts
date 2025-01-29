@@ -9,7 +9,15 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+
+
+repositories {
+    google()
+    mavenCentral()
+}
+
 kotlin {
+    jvm()
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -27,12 +35,14 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.iot)
+            implementation(libs.iotdataplane)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -43,6 +53,21 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+            implementation(libs.kmqtt.common)
+            implementation(libs.kmqtt.client)
+            implementation(libs.file)
+            implementation(libs.okio)
+
+
+//            implementation(libs.org.eclipse.paho.client.mqttv3)
+//            implementation(libs.wildfly.openssl)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.file)
+            implementation(libs.okio)
         }
     }
 }
@@ -76,5 +101,6 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }
 
