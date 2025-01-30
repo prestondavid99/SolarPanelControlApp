@@ -21,11 +21,12 @@ class MqttManager : CoroutineScope {
     val payload: String
         get() = _payload
 
+    private val serverCertificate = "files/certs/AmazonRootCA1.pem"
+    private val PRIVATE_KEY = "files/certs/private_key.pem.key"
+    private val DEVICE_CERTIFICATE = "files/certs/device_cert.pem.crt"
+
     companion object {
         private const val ADDRESS = "a12offtehlmcn0-ats.iot.us-east-1.amazonaws.com"
-        private const val SERVER_CERTIFICATE = "files/certs/AmazonRootCA1.pem"
-        private const val PRIVATE_KEY = "files/certs/private_key.pem.key"
-        private const val DEVICE_CERTIFICATE = "files/certs/device_cert.pem.crt"
         private const val PORT = 8883
     }
 
@@ -39,7 +40,7 @@ class MqttManager : CoroutineScope {
                 ADDRESS,
                 PORT,
                 TLSClientSettings(
-                    serverCertificate = Res.readBytes(SERVER_CERTIFICATE).decodeToString(),
+                    serverCertificate = Res.readBytes(serverCertificate).decodeToString(),
                     clientCertificate = Res.readBytes(DEVICE_CERTIFICATE).decodeToString(),
                     clientCertificateKey = Res.readBytes(PRIVATE_KEY).decodeToString(),
                 )
