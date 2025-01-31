@@ -1,3 +1,6 @@
+import io.matthewnelson.kmp.file.SysTempDir
+import io.matthewnelson.kmp.file.absolutePath
+import io.matthewnelson.kmp.file.parentFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -15,10 +18,11 @@ import socket.tls.TLSClientSettings
 import kotlin.test.Test
 
 class MqttCoroutineAWSTest {
-    private val homeDirectory = "/Users/rental/StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs"
-    private val serverCertificate = "$homeDirectory/AmazonRootCA1.pem"
-    private val privateKey = "$homeDirectory/private_key.pem.key"
-    private val deviceCertificate = "$homeDirectory/device_cert.pem.crt"
+    private val home = SysTempDir.parentFile?.parentFile?.parentFile?.absolutePath
+    private val root = "StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs"
+    private val serverCertificate = "$home/$root/AmazonRootCA1.pem"
+    private val privateKey = "$home/$root/private_key.pem.key"
+    private val deviceCertificate = "$home/$root/device_cert.pem.crt"
     private val coroutineContext = CoroutineScope(Dispatchers.IO)
 
 
@@ -54,7 +58,7 @@ class MqttCoroutineAWSTest {
             }
 
             try {
-                client.runSuspend(Dispatchers.IO) // Blocking method, use step() if you don't want to block the thread
+                client.runSuspend(Dispatchers.IO)
 
                 // Subscribe to a topic
                 println("Subscribing to topic...")
@@ -64,15 +68,10 @@ class MqttCoroutineAWSTest {
                 println("Publishing message...")
                 client.publish(false, Qos.AT_LEAST_ONCE, "/home", "OH YEAH".encodeToByteArray().toUByteArray())
 
-                delay(2000) // Wait for messages
+                delay(1000) // Wait for messages
             } catch (e: Exception) {
                 println("Error: ${e.message}")
                 e.printStackTrace()
-            } finally {
-                // Disconnect the client gracefully
-                println("Disconnecting...")
-                client
             }
-//        }
     }
 }

@@ -17,20 +17,20 @@ class MqttManager : CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
 
-    private val _payload = ""
+    private var _payload = ""
     val payload: String
         get() = _payload
 
     private val serverCertificate = "files/certs/AmazonRootCA1.pem"
-    private val PRIVATE_KEY = "files/certs/private_key.pem.key"
-    private val DEVICE_CERTIFICATE = "files/certs/device_cert.pem.crt"
+    private val privateKey = "files/certs/private_key.pem.key"
+    private val deviceCertificate = "files/certs/device_cert.pem.crt"
 
     companion object {
         private const val ADDRESS = "a12offtehlmcn0-ats.iot.us-east-1.amazonaws.com"
         private const val PORT = 8883
     }
 
-    private var client: MQTTClient? = null
+    var client: MQTTClient? = null
 
     @OptIn(ExperimentalResourceApi::class)
     fun init() {
@@ -41,14 +41,15 @@ class MqttManager : CoroutineScope {
                 PORT,
                 TLSClientSettings(
                     serverCertificate = Res.readBytes(serverCertificate).decodeToString(),
-                    clientCertificate = Res.readBytes(DEVICE_CERTIFICATE).decodeToString(),
-                    clientCertificateKey = Res.readBytes(PRIVATE_KEY).decodeToString(),
+                    clientCertificate = Res.readBytes(deviceCertificate).decodeToString(),
+                    clientCertificateKey = Res.readBytes(privateKey).decodeToString(),
                 )
             ) {
                 println("Payload: ")
                 println(it.payload?.toByteArray()?.decodeToString())
+                _payload = it.payload?.toByteArray()?.decodeToString() ?: ""
             }
-
+            client?.runSuspend(Dispatchers.IO)
         }
     }
 
@@ -61,14 +62,8 @@ class MqttManager : CoroutineScope {
 
     fun publish(topic: String, message: String) {
         launch {
-            client?.publish(false, Qos.EXACTLY_ONCE, topic, message.encodeToByteArray().toUByteArray())
+            client?.publish(false, Qos.AT_MOST_ONCE, topic, message.encodeToByteArray().toUByteArray())
             println("Published to $topic: $message")
-        }
-    }
-
-    fun start() {
-        launch {
-            client?.runSuspend()
         }
     }
 

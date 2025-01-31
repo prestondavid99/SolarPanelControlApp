@@ -1,3 +1,6 @@
+import io.matthewnelson.kmp.file.SysTempDir
+import io.matthewnelson.kmp.file.absolutePath
+import io.matthewnelson.kmp.file.parentFile
 import mqtt.MQTTVersion
 import mqtt.Subscription
 import mqtt.packets.Qos
@@ -10,10 +13,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 class MqttAWSTest {
-    private val homeDirectory = "/Users/rental/StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs"
-    private val serverCertificate = "$homeDirectory/AmazonRootCA1.pem"
-    private val privateKey = "$homeDirectory/private_key.pem.key"
-    private val deviceCertificate = "$homeDirectory/device_cert.pem.crt"
+    private val home = SysTempDir.parentFile?.parentFile?.parentFile?.absolutePath
+    private val root = "StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs"
+    private val serverCertificate = "$home/$root/AmazonRootCA1.pem"
+    private val privateKey = "$home/$root/private_key.pem.key"
+    private val deviceCertificate = "$home/$root/device_cert.pem.crt"
 
 
     fun listFiles(directoryPath: String): List<String> {
@@ -23,7 +27,8 @@ class MqttAWSTest {
 
     @Test
     fun listFilesTest() {
-        val files = listFiles("/Users/rental/StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs")
+        println("HOME: $home")
+        val files = listFiles("$home/$root")
         println("FILES: ")
         println(files)
     }
