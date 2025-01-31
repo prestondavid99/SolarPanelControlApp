@@ -20,12 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okio.FileSystem
-import okio.Path
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import org.jetbrains.compose.ui.tooling.preview.Preview
+
 
 @Composable
 @Preview
@@ -39,6 +40,7 @@ fun App() {
 fun Mqtt() {
     val scope = rememberCoroutineScope()
     val mqttManager = remember { MqttManager() }
+    val payload by remember { mutableStateOf(mqttManager.payload) }
     var connectionStatus by remember { mutableStateOf("Disconnected") }
     val fileSystem = FileSystem.SYSTEM
     val path = fileSystem.canonicalize("/".toPath())
@@ -48,9 +50,10 @@ fun Mqtt() {
         scope.launch {
             try {
                 mqttManager.init()
-                mqttManager.subscribe("/home")
-                mqttManager.start()
+                while (mqttManager.client == null) delay(100)
+                println("Client connected!")
                 connectionStatus = "Connected"
+                mqttManager.subscribe("/home")
             } catch (e: Exception) {
                 connectionStatus = "Connection Failed: ${e.message}"
                 println(e.printStackTrace())
@@ -75,6 +78,7 @@ fun Mqtt() {
             Text("Send Message")
         }
         Text("Payload: " )
+        Text(payload)
     }
 }
 
