@@ -49,8 +49,14 @@ fun Mqtt() {
     LaunchedEffect(Unit) {
         scope.launch {
             try {
+                var delayMillis = 0
                 mqttManager.init()
-                while (mqttManager.client == null) delay(100)
+                while (mqttManager.client == null) {
+                    delay(100)
+                    delayMillis += 100
+                    if (delayMillis >= 5000)
+                        throw Exception("Client not initialized after 5 seconds of wait time")
+                }
                 println("Client connected!")
                 connectionStatus = "Connected"
                 mqttManager.subscribe("/home")
