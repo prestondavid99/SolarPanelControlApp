@@ -1,4 +1,4 @@
-package org.example.project
+package org.example.project.view
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -19,12 +19,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.sp
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
+import org.example.project.MqttManager
+import org.example.project.model.Status
+import org.example.project.viewmodel.AppViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 
@@ -37,61 +40,54 @@ fun App() {
 }
 
 @Composable
-fun Mqtt() {
+fun Mqtt(viewModel: AppViewModel = AppViewModel()) {
+
     val scope = rememberCoroutineScope()
     val mqttManager = remember { MqttManager() }
-    val payload by remember { mutableStateOf(mqttManager.payload) }
+    val status by viewModel.status.collectAsState()
+    val client by viewModel.client.collectAsState()
     var connectionStatus by remember { mutableStateOf("Disconnected") }
     val fileSystem = FileSystem.SYSTEM
     val path = fileSystem.canonicalize("/".toPath())
     println(path)
 
     LaunchedEffect(Unit) {
-        scope.launch {
-            try {
-                var delayMillis = 0
-                mqttManager.init()
-                while (mqttManager.client == null) {
-                    delay(100)
-                    delayMillis += 100
-                    if (delayMillis >= 5000)
-                        throw Exception("Client not initialized after 5 seconds of wait time")
-                }
-                println("Client connected!")
-                connectionStatus = "Connected"
-                mqttManager.subscribe("/home")
-            } catch (e: Exception) {
-                connectionStatus = "Connection Failed: ${e.message}"
-                println(e.printStackTrace())
-            }
+        viewModel.subscribe("/home")
+        viewModel.status.collect { newStatus ->
+            // Update connection status based on newStatus if needed
+
         }
     }
 
     Column {
-        Text("Status: $connectionStatus")
         Button(
             onClick = {
-                scope.launch {
-                    try {
-                        mqttManager.publish("/home","Hello from KMP!")
-                    } catch (e: Exception) {
-                        connectionStatus = "Publish Failed: ${e.message}"
-                    }
+                try {
+                    viewModel.publish("/home",Status(
+                        isExtended = true,
+                        isLifted = true,
+                        windSpeed = 999
+                    ))
+                } catch (e: Exception) {
+                    connectionStatus = "Publish Failed: ${e.message}"
                 }
             },
-            enabled = connectionStatus == "Connected"
+            enabled = client != null
         ) {
             Text("Send Message")
         }
-        Text("Payload: " )
-        Text(payload)
+        Text("Status:", fontSize = 20.sp)
+        Text("Is Extended: ${status.isExtended}", fontSize = 18.sp)
+        Text("Is Lifted: ${status.isLifted}", fontSize = 18.sp)
+        Text("Wind Speed: ${status.windSpeed}", fontSize = 18.sp)
     }
 }
 
 @Composable
 fun ColumnLayout() {
-    var isExtended by remember { (mutableStateOf(false)) }
-    var isLifted by remember { (mutableStateOf(false)) }
+    var isExtended by remember { mutableStateOf(false) }
+    var isLifted by remember { mutableStateOf(false) }
+    var windSpeed by remember { mutableStateOf(0) }
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,

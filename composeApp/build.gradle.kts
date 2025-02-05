@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 
@@ -32,6 +33,8 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
+            linkerOpts.add("-mios-simulator-version-min=15.0") // Match the minimum version of your dependencies
+            freeCompilerArgs += "-Xbinary=bundleId=com.example.ComposeApp"
             isStatic = true
         }
     }
@@ -53,18 +56,21 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
+
             implementation(libs.kmqtt.common)
             implementation(libs.kmqtt.client)
             implementation(libs.file)
             implementation(libs.okio)
-
-
+            // Json serialization
+            implementation(libs.kotlinx.serialization.json)
 //            implementation(libs.org.eclipse.paho.client.mqttv3)
 //            implementation(libs.wildfly.openssl)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation(libs.kotlinx.coroutines.test)
             implementation(libs.kotlinx.datetime)
             implementation(libs.file)
             implementation(libs.okio)
