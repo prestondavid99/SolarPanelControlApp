@@ -1,26 +1,22 @@
 package org.example.project.viewmodel
 
 import MQTTClient
-import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.example.project.MqttManager
-import org.example.project.model.Status
+import org.example.project.model.Payload
 
 class AppViewModel(topic: String = "/home"): ViewModel() {
-    private val _mqttManager = MqttManager()
-    val mqttManager: MqttManager
-        get() = _mqttManager
-
-    private val _client = MutableStateFlow(_mqttManager.client)
-    val client: StateFlow<MQTTClient?> = _client.asStateFlow()
-    private val _status = MutableStateFlow(Status())
-    val status: StateFlow<Status> = _status.asStateFlow()
+    private val mqttManager = MqttManager()
+    private val _payload = MutableStateFlow(Payload())
+    val payload: StateFlow<Payload> = _payload.asStateFlow()
+    val connectionState: StateFlow<Boolean> = mqttManager.connectionState
 
 
 
@@ -28,12 +24,13 @@ class AppViewModel(topic: String = "/home"): ViewModel() {
         viewModelScope.launch {
             try {
                 println("Initializing MQTT client...")
-                _mqttManager.init(topic)
-                fiveSecTimer()
+                mqttManager.init(topic)
                 println("MQTT client initialized and listening on topic: $topic")
-                _client.value = _mqttManager.client
-                _mqttManager.setStatusUpdateCallback { newStatus ->
-                    _status.value = newStatus
+                mqttManager.setPayloadUpdateCallback { newPayload ->
+                    _payload.value = newPayload
+                }
+                mqttManager.connectionState.collect { connected ->
+                    println("Connection state changed to: $connected")
                 }
             } catch (e: Exception) {
                 println("Failed to initialize MQTT client: ${e.message}")
@@ -43,14 +40,13 @@ class AppViewModel(topic: String = "/home"): ViewModel() {
     }
 
     fun subscribe(topic: String) {
-        _mqttManager.subscribe(topic)
-
+        mqttManager.subscribe(topic)
     }
 
-    fun publish(topic: String, status: Status) {
-        viewModelScope.launch {  // Use IO dispatcher for network operations
+    fun publish(topic: String, payload: Payload) {
+        viewModelScope.launch(Dispatchers.IO) {  // Use IO dispatcher for network operations
             try {
-                _mqttManager.publish(topic, Json.encodeToString(status))
+                mqttManager.publish(topic, Json.encodeToString(payload))
             } catch (e: Exception) {
                 // Update UI state with error
                 println("Failed to publish message: ${e.message}")
@@ -60,9 +56,9 @@ class AppViewModel(topic: String = "/home"): ViewModel() {
 
     private fun fiveSecTimer() {
         var delayMillis = 0
-        var waitMillis = 10000
+        val waitMillis = 10000
         viewModelScope.launch {
-            while (_mqttManager.client == null) {
+            while (mqttManager.clientState.value == null) {
                 delay(100)
                 delayMillis += 100
                 if (delayMillis % 1000 == 0)

@@ -19,14 +19,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import org.example.project.MqttManager
-import org.example.project.model.Status
+import org.example.project.model.Payload
 import org.example.project.viewmodel.AppViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -42,20 +41,15 @@ fun App() {
 @Composable
 fun Mqtt(viewModel: AppViewModel = AppViewModel()) {
 
-    val scope = rememberCoroutineScope()
-    val mqttManager = remember { MqttManager() }
-    val status by viewModel.status.collectAsState()
-    val client by viewModel.client.collectAsState()
-    var connectionStatus by remember { mutableStateOf("Disconnected") }
+    val payload by viewModel.payload.collectAsState()
+    val isConnected by viewModel.connectionState.collectAsState()
     val fileSystem = FileSystem.SYSTEM
     val path = fileSystem.canonicalize("/".toPath())
     println(path)
 
     LaunchedEffect(Unit) {
-        viewModel.subscribe("/home")
-        viewModel.status.collect { newStatus ->
-            // Update connection status based on newStatus if needed
-
+        viewModel.payload.collect { newPayload ->
+            // Update connection payload based on newStatus if needed
         }
     }
 
@@ -63,23 +57,25 @@ fun Mqtt(viewModel: AppViewModel = AppViewModel()) {
         Button(
             onClick = {
                 try {
-                    viewModel.publish("/home",Status(
-                        isExtended = true,
-                        isLifted = true,
-                        windSpeed = 999
-                    ))
+                    viewModel.publish(
+                        "/home", Payload(
+                            isExtended = true,
+                            isLifted = true,
+                            windSpeed = 999
+                        )
+                    )
                 } catch (e: Exception) {
-                    connectionStatus = "Publish Failed: ${e.message}"
+                    println("Publish Failed: ${e.message}")
                 }
             },
-            enabled = client != null
+            enabled = isConnected
         ) {
             Text("Send Message")
         }
-        Text("Status:", fontSize = 20.sp)
-        Text("Is Extended: ${status.isExtended}", fontSize = 18.sp)
-        Text("Is Lifted: ${status.isLifted}", fontSize = 18.sp)
-        Text("Wind Speed: ${status.windSpeed}", fontSize = 18.sp)
+        Text("Payload Received:", fontSize = 30.sp)
+        Text("Is Extended: ${payload.isExtended}", fontSize = 20.sp)
+        Text("Is Lifted: ${payload.isLifted}", fontSize = 20.sp)
+        Text("Wind Speed: ${payload.windSpeed}", fontSize = 20.sp)
     }
 }
 

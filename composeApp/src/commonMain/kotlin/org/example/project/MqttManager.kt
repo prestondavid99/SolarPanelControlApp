@@ -7,7 +7,7 @@ import mqtt.MQTTVersion
 import mqtt.Subscription
 import mqtt.packets.Qos
 import mqtt.packets.mqttv5.SubscriptionOptions
-import org.example.project.model.Status
+import org.example.project.model.Payload
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import socket.tls.TLSClientSettings
 import solarpanelcontrolapp.composeapp.generated.resources.Res
@@ -16,16 +16,27 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class MqttManager : CoroutineScope {
-    private val job = Job()
+    private val job = SupervisorJob()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
 
-    private var statusUpdateCallback: ((Status) -> Unit)? = null
+    private val _clientState = MutableStateFlow<MQTTClient?>(null)
+    val clientState: StateFlow<MQTTClient?> = _clientState.asStateFlow()
 
-    fun setStatusUpdateCallback(callback: (Status) -> Unit) {
+    private val _connectionState = MutableStateFlow(false)
+    val connectionState: StateFlow<Boolean> = _connectionState.asStateFlow()
+
+    private var statusUpdateCallback: ((Payload) -> Unit)? = null
+
+    private var initialized = false
+
+    fun setPayloadUpdateCallback(callback: (Payload) -> Unit) {
         statusUpdateCallback = callback
     }
 
@@ -38,11 +49,11 @@ class MqttManager : CoroutineScope {
         private const val PORT = 8883
     }
 
-    var client: MQTTClient? = null
-
     @OptIn(ExperimentalResourceApi::class)
     suspend fun init(topic: String) {
         println("Starting MQTT initialization...")
+        if (initialized) return
+        initialized = true
         try {
             println("Reading certificates...")
             val serverCert = Res.readBytes(serverCertificate).decodeToString()
@@ -62,7 +73,7 @@ class MqttManager : CoroutineScope {
             }
 
             println("Creating MQTT client...")
-            client = MQTTClient(
+            _clientState.value = MQTTClient(
                 MQTTVersion.MQTT5,
                 ADDRESS,
                 PORT,
@@ -71,6 +82,15 @@ class MqttManager : CoroutineScope {
                     clientCertificate = clientCert,
                     clientCertificateKey = clientKey,
                 ),
+                onConnected = {
+                    println("Connected to MQTT broker successfully.")
+                    _connectionState.value = true
+                    subscribe(topic)
+                },
+                onDisconnected = {
+                    println("Connection to MQTT broker lost.")
+                    _connectionState.value = false
+                },
                 debugLog = true, // Enable detailed packet logging
                 publishReceived = { publish ->
                     // Log incoming messages
@@ -79,10 +99,10 @@ class MqttManager : CoroutineScope {
                     println("Payload Received: $payloadString")
                     payloadString?.let { json ->
                         try {
-                            val status = Json.decodeFromString<Status>(json)
-                            statusUpdateCallback?.invoke(status)
+                            val payload = Json.decodeFromString<Payload>(json)
+                            statusUpdateCallback?.invoke(payload)
                         } catch (e: Exception) {
-                            println("Failed to parse status: ${e.message}")
+                            println("Failed to parse payload: ${e.message}")
                         }
                     }
                 }
@@ -90,11 +110,8 @@ class MqttManager : CoroutineScope {
             println("MQTT client created successfully.")
 
             println("Connecting to broker at $ADDRESS:$PORT...")
-            client?.runSuspend(Dispatchers.IO)
-            println("Connected to MQTT broker successfully.")
+            _clientState.value?.runSuspend(Dispatchers.IO)
 
-            // Subscribe to the topic
-            subscribe(topic)
         } catch (e: Exception) {
             println("Failed to initialize MQTT client: ${e.message}")
             e.printStackTrace()
@@ -116,7 +133,7 @@ class MqttManager : CoroutineScope {
     fun subscribe(subscription: String) {
         try {
             println("Attempting to subscribe to topic: $subscription")
-            client?.subscribe(listOf(Subscription(subscription, SubscriptionOptions(Qos.AT_LEAST_ONCE))))
+            _clientState.value?.subscribe(listOf(Subscription(subscription, SubscriptionOptions(Qos.AT_LEAST_ONCE))))
             println("Successfully subscribed to $subscription")
         } catch (e: Exception) {
             println("Failed to subscribe to topic $subscription: ${e.message}")
@@ -127,9 +144,12 @@ class MqttManager : CoroutineScope {
     fun publish(topic: String, jsonString: String) {
         try {
             println("Attempting to publish message to topic $topic...")
-            client?.publish(false, Qos.AT_MOST_ONCE, topic, jsonString.encodeToByteArray().toUByteArray())
-            println("Successfully published message to $topic: $jsonString")
+            if (_connectionState.value) {
+                _clientState.value?.publish(false, Qos.AT_MOST_ONCE, topic, jsonString.encodeToByteArray().toUByteArray())
+                println("Successfully published message to $topic: $jsonString")
+            }
         } catch (e: Exception) {
+            _connectionState.value = false
             println("Failed to publish message to topic $topic: ${e.message}")
             e.printStackTrace()
         }
