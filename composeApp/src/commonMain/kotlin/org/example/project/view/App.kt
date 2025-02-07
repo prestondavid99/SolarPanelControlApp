@@ -47,11 +47,11 @@ fun Mqtt(viewModel: AppViewModel = AppViewModel()) {
     val path = fileSystem.canonicalize("/".toPath())
     println(path)
 
-    LaunchedEffect(Unit) {
-        viewModel.payload.collect { newPayload ->
-            // Update connection payload based on newStatus if needed
-        }
-    }
+//    LaunchedEffect(Unit) {
+//        viewModel.payload.collect { newPayload ->
+//            // Update connection payload based on newStatus if needed
+//        }
+//    }
 
     Column {
         Button(
