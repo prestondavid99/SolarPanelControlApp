@@ -36,9 +36,9 @@ object MqttManager : CoroutineScope {
     private var initialized = false
     private var currentTopic = ""
 
-    private val serverCertificate = "files/certs/AmazonRootCA1.pem"
-    private val privateKey = "files/certs/private_key.pem.key"
-    private val deviceCertificate = "files/certs/device_cert.pem.crt"
+    private val serverCertificatePath = "AmazonRootCA1.pem"
+    private val privateKeyPath = "private_key.pem.key"
+    private val deviceCertificatePath = "device_cert.pem.crt"
 
     private const val ADDRESS = "a12offtehlmcn0-ats.iot.us-east-1.amazonaws.com"
     private const val PORT = 8883
@@ -82,9 +82,9 @@ object MqttManager : CoroutineScope {
 
     @OptIn(ExperimentalResourceApi::class)
     private suspend fun loadCertificates(): Triple<String, String, String> {
-        val serverCert = Res.readBytes(serverCertificate).decodeToString()
-        val clientCert = Res.readBytes(deviceCertificate).decodeToString()
-        val clientKey = Res.readBytes(privateKey).decodeToString()
+        val serverCert = loadCertificateResource(serverCertificatePath).decodeToString()
+        val clientCert = loadCertificateResource(deviceCertificatePath).decodeToString()
+        val clientKey = loadCertificateResource(privateKeyPath).decodeToString()
         return Triple(serverCert, clientCert, clientKey)
     }
 

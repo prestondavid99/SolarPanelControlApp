@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mqtt.MQTTVersion
 import mqtt.Subscription
@@ -14,15 +13,21 @@ import mqtt.packets.mqttv5.SubscriptionOptions
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 import socket.tls.TLSClientSettings
+import solarpanelcontrolapp.composeapp.generated.resources.Res
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 class MqttCoroutineAWSTest {
     private val home = SysTempDir.parentFile?.parentFile?.parentFile?.absolutePath
     private val root = "StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs"
-    private val serverCertificate = "$home/$root/AmazonRootCA1.pem"
-    private val privateKey = "$home/$root/private_key.pem.key"
-    private val deviceCertificate = "$home/$root/device_cert.pem.crt"
+    private val serverCertificatePath = "files/certs/AmazonRootCA1.pem"
+    private val deviceCertificatePath = "files/certs/device_cert.pem.crt"
+    private val privateKeyPath = "files/certs/private_key.pem.key"
+    private lateinit var serverCertificate: String
+    private lateinit var privateKey: String
+    private lateinit var deviceCertificate: String
     private val coroutineContext = CoroutineScope(Dispatchers.IO)
 
 
@@ -31,13 +36,24 @@ class MqttCoroutineAWSTest {
         return FileSystem.SYSTEM.list(directory).map { it.name }
     }
 
-    @Test
-    fun listFilesTest() {
-        val files = listFiles("/Users/rental/StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs")
-        println("FILES: ")
-        println(files)
+    @OptIn(ExperimentalResourceApi::class)
+    @BeforeTest
+    fun getCertificates() = runBlocking {
+        serverCertificate = Res.readBytes(serverCertificatePath).decodeToString()
+        privateKey = Res.readBytes(privateKeyPath).decodeToString()
+        deviceCertificate = Res.readBytes(deviceCertificatePath).decodeToString()
     }
 
+
+
+//    @Test
+//    fun listFilesTest() {
+//        val files = listFiles("/Users/rental/StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs")
+//        println("FILES: ")
+//        println(files)
+//    }
+
+    @OptIn(ExperimentalUnsignedTypes::class)
     @Test
     fun mqttTest() = runBlocking {
 //        coroutineContext.launch {

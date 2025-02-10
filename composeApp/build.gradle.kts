@@ -10,7 +10,10 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
-
+compose.resources {
+    publicResClass = true
+    generateResClass = always
+}
 
 repositories {
     google()
@@ -37,6 +40,11 @@ kotlin {
             freeCompilerArgs += "-Xbinary=bundleId=com.example.ComposeApp"
             isStatic = true
         }
+    }
+
+    // For all copy tasks
+    tasks.withType<Copy>().configureEach {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 
     sourceSets {
@@ -74,6 +82,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.file)
             implementation(libs.okio)
+            implementation(compose.components.resources)
         }
     }
 }
