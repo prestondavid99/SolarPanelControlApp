@@ -4,9 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Payload(
-    var isExtended: Boolean = false,
-    var isLifted: Boolean = false,
-    var windSpeed: Int = 0
+    var raise_array: Int = -1
 )
 
 /**

@@ -10,7 +10,6 @@ import mqtt.packets.mqttv5.SubscriptionOptions
 import org.example.project.model.Payload
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import socket.tls.TLSClientSettings
-import solarpanelcontrolapp.composeapp.generated.resources.Res
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,15 +52,18 @@ object MqttManager : CoroutineScope {
         currentTopic = topic
 
         try {
+
             val settings = createTlsSettings()
             client = MQTTClient(
                 MQTTVersion.MQTT5,
                 ADDRESS,
                 PORT,
                 settings,
+//                clientId = "solarPanelControl",
                 onConnected = { handleConnected(it) },
                 onDisconnected = { handleDisconnected() },
                 publishReceived = { handleMessageReceived(it) },
+                debugLog = true
             ).apply {
                 runSuspend(Dispatchers.IO)
             }
