@@ -12,6 +12,8 @@
 		15BB3FAB2D59A4DB00454AAF /* device_cert.pem.crt in Resources */ = {isa = PBXBuildFile; fileRef = 15BB3FA72D59A4DB00454AAF /* device_cert.pem.crt */; };
 		15BB3FAC2D59A4DB00454AAF /* private_key.pem.key in Resources */ = {isa = PBXBuildFile; fileRef = 15BB3FA82D59A4DB00454AAF /* private_key.pem.key */; };
 		15BB3FAD2D59A4DB00454AAF /* AmazonRootCA1.pem in Resources */ = {isa = PBXBuildFile; fileRef = 15BB3FA62D59A4DB00454AAF /* AmazonRootCA1.pem */; };
+		15DCA4E42D6E212E008442FF /* converted_pkcs8_key.pem in Resources */ = {isa = PBXBuildFile; fileRef = 15DCA4E32D6E212E008442FF /* converted_pkcs8_key.pem */; };
+		15DCA4E62D6E213B008442FF /* carter_device_cert.pem.crt in Resources */ = {isa = PBXBuildFile; fileRef = 15DCA4E52D6E213B008442FF /* carter_device_cert.pem.crt */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 /* End PBXBuildFile section */
@@ -22,6 +24,8 @@
 		15BB3FA62D59A4DB00454AAF /* AmazonRootCA1.pem */ = {isa = PBXFileReference; lastKnownFileType = text; path = AmazonRootCA1.pem; sourceTree = "<group>"; };
 		15BB3FA72D59A4DB00454AAF /* device_cert.pem.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = device_cert.pem.crt; sourceTree = "<group>"; };
 		15BB3FA82D59A4DB00454AAF /* private_key.pem.key */ = {isa = PBXFileReference; lastKnownFileType = text; path = private_key.pem.key; sourceTree = "<group>"; };
+		15DCA4E32D6E212E008442FF /* converted_pkcs8_key.pem */ = {isa = PBXFileReference; lastKnownFileType = text; path = converted_pkcs8_key.pem; sourceTree = "<group>"; };
+		15DCA4E52D6E213B008442FF /* carter_device_cert.pem.crt */ = {isa = PBXFileReference; lastKnownFileType = text; path = carter_device_cert.pem.crt; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* SolarPanelControlApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SolarPanelControlApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -65,6 +69,8 @@
 				15BB3FA62D59A4DB00454AAF /* AmazonRootCA1.pem */,
 				15BB3FA72D59A4DB00454AAF /* device_cert.pem.crt */,
 				15BB3FA82D59A4DB00454AAF /* private_key.pem.key */,
+				15DCA4E32D6E212E008442FF /* converted_pkcs8_key.pem */,
+				15DCA4E52D6E213B008442FF /* carter_device_cert.pem.crt */,
 			);
 			sourceTree = "<group>";
 		};
@@ -166,6 +172,8 @@
 				15BB3FAB2D59A4DB00454AAF /* device_cert.pem.crt in Resources */,
 				15BB3FAC2D59A4DB00454AAF /* private_key.pem.key in Resources */,
 				15BB3FAD2D59A4DB00454AAF /* AmazonRootCA1.pem in Resources */,
+				15DCA4E42D6E212E008442FF /* converted_pkcs8_key.pem in Resources */,
+				15DCA4E62D6E213B008442FF /* carter_device_cert.pem.crt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -350,7 +358,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = UFAYLTY954;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -377,7 +385,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = UFAYLTY954;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",

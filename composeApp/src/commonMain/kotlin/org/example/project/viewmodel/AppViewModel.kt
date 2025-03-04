@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import org.example.project.MqttManager
 import org.example.project.model.Payload
 
-class AppViewModel(private val topic: String = "dryrise"): ViewModel() {
+class AppViewModel(private val topic: String = "esp32/test"): ViewModel() {
     private val _raiseArray = MutableStateFlow(false)
     val raiseArray: StateFlow<Boolean> = _raiseArray.asStateFlow()
     private val mqttManager = MqttManager
@@ -48,7 +48,6 @@ class AppViewModel(private val topic: String = "dryrise"): ViewModel() {
                 // Create a new payload copying the new raise_array value
                 val updatedPayload = payload.copy(raise_array = newValue.compareTo(false))
                 mqttManager.publish(topic, updatedPayload)
-                mqttManager.publish(topic, payload)
             } catch (e: Exception) {
                 // Update UI state with error
                 println("Failed to publish message: ${e.message}")

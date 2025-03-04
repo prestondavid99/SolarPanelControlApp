@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Payload(
-    var raise_array: Int = -1
+    var raise_array: Int = 0
 )
 
 /**

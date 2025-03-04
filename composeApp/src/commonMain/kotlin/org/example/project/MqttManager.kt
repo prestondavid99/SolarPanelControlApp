@@ -36,10 +36,19 @@ object MqttManager : CoroutineScope {
     private var currentTopic = ""
 
     private val serverCertificatePath = "AmazonRootCA1.pem"
+    /**IMPORTANT! You must make sure the private key is converted to PKCS#8!
+     * Amazon automatically exports a key in PKCS#1 which starts with "BEGIN RSA PRIVATE KEY"
+     * what you want is the version that starts with "BEGIN PRIVATE KEY"
+     *
+     * use this line (assumes your key is called private_key.pem.key):
+     * openssl pkey -in private_key.pem.key -out converted_pkcs8_key.pem
+     * **/
     private val privateKeyPath = "private_key.pem.key"
     private val deviceCertificatePath = "device_cert.pem.crt"
 
-    private const val ADDRESS = "a12offtehlmcn0-ats.iot.us-east-1.amazonaws.com"
+    private val prestonAddress = "a12offtehlmcn0-ats.iot.us-east-1.amazonaws.com"
+    private val carterAddress = "a27lpse32gmjju-ats.iot.us-east-1.amazonaws.com"
+    private val ADDRESS = prestonAddress
     private const val PORT = 8883
     private const val RECONNECT_DELAY = 5000L
 
@@ -141,11 +150,14 @@ object MqttManager : CoroutineScope {
                 throw IllegalStateException("Not connected to broker")
             }
 
+            val jsonEncoder = Json { encodeDefaults = true }
+            val jsonEncoded = jsonEncoder.encodeToString(Payload.serializer(), payload)
+
             client?.publish(
                 false,
                 Qos.AT_MOST_ONCE,
                 topic,
-                Json.encodeToString(payload).encodeToByteArray().toUByteArray()
+                jsonEncoded.encodeToByteArray().toUByteArray()
             )
         }
     }
