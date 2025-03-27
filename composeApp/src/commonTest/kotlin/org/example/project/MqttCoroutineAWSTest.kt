@@ -22,14 +22,13 @@ import kotlin.test.Test
 class MqttCoroutineAWSTest {
     private val home = SysTempDir.parentFile?.parentFile?.parentFile?.absolutePath
     private val root = "StudioProjects/SolarPanelControlApp/composeApp/src/commonMain/composeResources/files/certs"
-    private val serverCertificatePath = "files/certs/AmazonRootCA1.pem"
+    private val serverCertificatePath = "AmazonRootCA1.pem"
     private val deviceCertificatePath = "files/certs/device_cert.pem.crt"
     private val privateKeyPath = "files/certs/private_key.pem.key"
     private lateinit var serverCertificate: String
     private lateinit var privateKey: String
     private lateinit var deviceCertificate: String
     private val coroutineContext = CoroutineScope(Dispatchers.IO)
-
 
     fun listFiles(directoryPath: String): List<String> {
         val directory = directoryPath.toPath()
@@ -56,7 +55,6 @@ class MqttCoroutineAWSTest {
     @OptIn(ExperimentalUnsignedTypes::class)
     @Test
     fun mqttTest() = runBlocking {
-//        coroutineContext.launch {
             val client = MQTTClient(
                 MQTTVersion.MQTT5,            // Using MQTT v5 protocol
                 "a12offtehlmcn0-ats.iot.us-east-1.amazonaws.com",         // Test broker

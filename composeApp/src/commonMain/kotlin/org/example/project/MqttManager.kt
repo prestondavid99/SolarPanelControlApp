@@ -8,7 +8,6 @@ import mqtt.Subscription
 import mqtt.packets.Qos
 import mqtt.packets.mqttv5.SubscriptionOptions
 import org.example.project.model.Payload
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import socket.tls.TLSClientSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,56 +18,69 @@ import mqtt.packets.mqtt.MQTTConnack
 import mqtt.packets.mqtt.MQTTPublish
 import mqtt.packets.mqttv5.ReasonCode
 
+/**
+ * MqttManager: A singleton object responsible for managing MQTT communications with AWS IoT.
+ * This manager handles connection, message publishing, subscription, and overall MQTT lifecycle.
+ */
 object MqttManager : CoroutineScope {
+
+    // The coroutine context for this scope, using a SupervisorJob for error isolation
+    // and IO dispatcher for network operations
+    // Philip Lackner has a great YouTube playlist for understanding Kotlin Coroutines:
+    // https://www.youtube.com/playlist?list=PLQkwcJG4YTCQcFEPuYGuv54nYai_lwil_
     override val coroutineContext = SupervisorJob() + Dispatchers.IO
 
-    private val mutex = Mutex()
+    private lateinit var resourceLoader: ResourceLoader
+    // Mutex specifically for connection-related operations
     private val connectionMutex = Mutex()
 
+    // MutableStateFlow to track the current connection state
     private val _connectionState = MutableStateFlow(false)
+    // Public StateFlow exposing the connection state
     val connectionState: StateFlow<Boolean> = _connectionState.asStateFlow()
 
+    // MutableStateFlow to store the most recently received payload
     private val _receivedPayload = MutableStateFlow<Payload?>(null)
+    // Public StateFlow exposing the received payload
     val receivedPayload: StateFlow<Payload?> = _receivedPayload.asStateFlow()
 
+    // The MQTT client instance
     private var client: MQTTClient? = null
+    // Flag to prevent multiple initializations
     private var initialized = false
+    // The current MQTT topic being subscribed to
     private var currentTopic = ""
 
-    private val serverCertificatePath = "AmazonRootCA1.pem"
-    /**IMPORTANT! You must make sure the private key is converted to PKCS#8!
-     * Amazon automatically exports a key in PKCS#1 which starts with "BEGIN RSA PRIVATE KEY"
-     * what you want is the version that starts with "BEGIN PRIVATE KEY"
-     *
-     * use this line (assumes your key is called private_key.pem.key):
-     * openssl pkey -in private_key.pem.key -out converted_pkcs8_key.pem
-     * **/
-    private val privateKeyPath = "private_key.pem.key"
-    private val deviceCertificatePath = "device_cert.pem.crt"
+    /**Security certificates and keys from AWS**/
+    private const val SERVER_CERT = "AmazonRootCA1.pem"
+    private const val PRIVATE_KEY = "pkcs8_key.pem"
+    private const val DEVICE_CERT = "device_cert.crt"
 
-    private val prestonAddress = "a12offtehlmcn0-ats.iot.us-east-1.amazonaws.com"
-    private val carterAddress = "a27lpse32gmjju-ats.iot.us-east-1.amazonaws.com"
-    private val ADDRESS = prestonAddress
+    /**AWS IoT Endpoint**/
+    private const val AWS_ENDPOINT = "a31zhgc1ryhddv-ats.iot.us-west-1.amazonaws.com" // Replace this with YOUR endpoint
+    // Standard MQTT over TLS port
     private const val PORT = 8883
+    // Delay before attempting to reconnect after a disconnection
     private const val RECONNECT_DELAY = 5000L
 
-
-    @OptIn(ExperimentalResourceApi::class)
-    suspend fun init(topic: String) {
+    /**
+     * Initializes the MQTT manager and establishes a connection to the AWS IoT broker.
+     * @param topic The MQTT topic to subscribe to after connection is established.
+     */
+    suspend fun init(topic: String, customResourceLoader: ResourceLoader = ResourceLoader()) {
         println("Starting MQTT initialization...")
+        resourceLoader = customResourceLoader
         if (initialized) return
         initialized = true
         currentTopic = topic
 
         try {
-
             val settings = createTlsSettings()
             client = MQTTClient(
                 MQTTVersion.MQTT5,
-                ADDRESS,
+                AWS_ENDPOINT,
                 PORT,
                 settings,
-//                clientId = "solarPanelControl",
                 onConnected = { handleConnected(it) },
                 onDisconnected = { handleDisconnected() },
                 publishReceived = { handleMessageReceived(it) },
@@ -82,6 +94,10 @@ object MqttManager : CoroutineScope {
         }
     }
 
+    /**
+     * Creates TLS settings for secure communication with AWS IoT.
+     * @return TLSClientSettings configured with necessary certificates and keys.
+     */
     private suspend fun createTlsSettings(): TLSClientSettings {
         val (serverCert, clientCert, clientKey) = loadCertificates()
         return TLSClientSettings(
@@ -91,14 +107,21 @@ object MqttManager : CoroutineScope {
         )
     }
 
-    @OptIn(ExperimentalResourceApi::class)
+    /**
+     * Loads the required certificates and private key from resources.
+     * @return A Triple containing the server certificate, client certificate, and client key as strings.
+     */
     private suspend fun loadCertificates(): Triple<String, String, String> {
-        val serverCert = loadCertificateResource(serverCertificatePath).decodeToString()
-        val clientCert = loadCertificateResource(deviceCertificatePath).decodeToString()
-        val clientKey = loadCertificateResource(privateKeyPath).decodeToString()
+        val serverCert = resourceLoader.loadCertificateResource(SERVER_CERT).decodeToString()
+        val clientCert = resourceLoader.loadCertificateResource(DEVICE_CERT).decodeToString()
+        val clientKey = resourceLoader.loadCertificateResource(PRIVATE_KEY).decodeToString()
         return Triple(serverCert, clientCert, clientKey)
     }
 
+    /**
+     * Handles the connected event from the MQTT client.
+     * @param flag The MQTT connection acknowledgment packet.
+     */
     private fun handleConnected(flag: MQTTConnack) {
         _connectionState.value = true
         launch {
@@ -106,10 +129,17 @@ object MqttManager : CoroutineScope {
         }
     }
 
+    /**
+     * Handles the disconnected event from the MQTT client.
+     */
     private fun handleDisconnected() {
         _connectionState.value = false
     }
 
+    /**
+     * Processes incoming MQTT messages.
+     * @param publish The MQTT publish packet containing the received message.
+     */
     @OptIn(ExperimentalUnsignedTypes::class)
     private fun handleMessageReceived(publish: MQTTPublish) {
         println("Received message on topic ${publish.topicName}")
@@ -125,6 +155,9 @@ object MqttManager : CoroutineScope {
         }
     }
 
+    /**
+     * Attempts to reconnect to the MQTT broker after a disconnection.
+     */
     private fun tryReconnect() {
         launch {
             connectionMutex.withLock {
@@ -136,6 +169,10 @@ object MqttManager : CoroutineScope {
         }
     }
 
+    /**
+     * Subscribes to a specified MQTT topic.
+     * @param topic The MQTT topic to subscribe to.
+     */
     private suspend fun subscribe(topic: String) {
         connectionMutex.withLock {
             client?.subscribe(
@@ -144,6 +181,12 @@ object MqttManager : CoroutineScope {
         }
     }
 
+    /**
+     * Publishes a payload to a specified MQTT topic.
+     * @param topic The MQTT topic to publish to.
+     * @param payload The Payload object to serialize and publish.
+     * @throws IllegalStateException If not connected to the MQTT broker.
+     */
     suspend fun publish(topic: String, payload: Payload) {
         connectionMutex.withLock {
             if (!_connectionState.value) {
@@ -162,6 +205,9 @@ object MqttManager : CoroutineScope {
         }
     }
 
+    /**
+     * Shuts down the MQTT manager, disconnecting from the broker and canceling all coroutines.
+     */
     fun shutdown() {
         client?.disconnect(ReasonCode.SERVER_SHUTTING_DOWN)
         coroutineContext.cancel()

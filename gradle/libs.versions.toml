@@ -23,6 +23,7 @@ kotlinxSerializationJson = "1.8.0" # This is DIFFERENT than Kotlin's versioning
 ktorClientCore = "3.0.3"
 okio = "3.9.1"
 orgEclipsePahoClientMqttv3 = "1.2.5"
+resources = "0.10.0"
 sslOpensslIosX64 = "0.2.0"
 wildflyOpenssl = "2.2.5.Final"
 
@@ -51,6 +52,8 @@ ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClien
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 org-eclipse-paho-client-mqttv3 = { module = "org.eclipse.paho:org.eclipse.paho.client.mqttv3", version.ref = "orgEclipsePahoClientMqttv3" }
+resources = { module = "com.goncalossilva:resources", version.ref = "resources" }
+
 s3 = { module = "aws.sdk.kotlin:s3", version.ref = "iot" }
 ssl-openssl-ios-arm64 = { module = "dev.icerock.moko:ssl-openssl-ios-arm64", version.ref = "sslOpensslIosX64" }
 ssl-openssl-ios-simulator-arm64 = { module = "dev.icerock.moko:ssl-openssl-ios-simulator-arm64", version.ref = "sslOpensslIosX64" }
@@ -64,3 +67,4 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-mu
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+resources = { id = "com.goncalossilva.resources", version.ref = "resources" }

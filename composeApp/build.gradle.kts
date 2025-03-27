@@ -1,5 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -8,6 +6,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.resources)
 }
 
 compose.resources {
@@ -23,7 +22,6 @@ repositories {
 kotlin {
     jvm()
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
@@ -74,8 +72,6 @@ kotlin {
             implementation(libs.okio)
             // Json serialization
             implementation(libs.kotlinx.serialization.json)
-//            implementation(libs.org.eclipse.paho.client.mqttv3)
-//            implementation(libs.wildfly.openssl)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -83,6 +79,7 @@ kotlin {
             implementation(libs.file)
             implementation(libs.okio)
             implementation(compose.components.resources)
+            implementation(libs.resources)
         }
     }
 }
